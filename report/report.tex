@@ -1,0 +1,142 @@
+%%% Template adapted from https://github.com/jdavis/latex-homework-template
+
+%%% HOW TO USE THIS TEMPLATE
+
+%%% Fill in your name, UIN, and the homework number in the below section
+
+\newcommand{\hmwkTitle}{\textbf{Network Report}}
+\newcommand{\hmwkClass}{CSCE413}
+\newcommand{\hmwkClassInstructor}{Marcus Botacin}
+\newcommand{\hmwkAuthorName}{\textbf{Marvin Fung}}
+\newcommand{\hmwkAuthorUIN}{\textbf{532003943}}
+
+%%% In between the \begin{document} and \end{document} tags,
+%%% use the following template for each problem. The number in brackets
+%%% should be the problem number. 
+
+%%% \begin{homeworkProblem}[1]
+%%%    \textbf{Solution:}
+%%% \end{homeworkProblem}
+
+%%% If you have any problems with this template,
+%%% email me at larenspear@tamu.edu or contact me on Slack.
+
+\documentclass{article}
+
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage[svgnames]{xcolor}
+\usepackage{listings}
+\usepackage[backend=biber,style=authoryear]{biblatex}
+\addbibresource{refs.bib}
+\lstset{
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    stringstyle=\color{green},
+    commentstyle=\color{CadetBlue},
+    morecomment=[l]{\%}
+}
+%
+% Basic Document Settings
+%
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName \ (\hmwkAuthorUIN)}
+\chead{\hmwkTitle}
+\rhead{\hmwkClass\ (\hmwkClassInstructor)}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+%
+% Create Problem Sections
+%
+
+\newcommand{\enterProblemHeader}[1]{
+    \nobreak\extramarks{}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+}
+
+\newcommand{\exitProblemHeader}[1]{
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \stepcounter{#1}
+    \nobreak\extramarks{Problem \arabic{#1}}{}\nobreak{}
+}
+
+\setcounter{secnumdepth}{0}
+\newcounter{partCounter}
+\newcounter{homeworkProblemCounter}
+\setcounter{homeworkProblemCounter}{1}
+
+% Homework Problem Environment
+
+\newenvironment{homeworkProblem}[1][-1]{
+    \ifnum#1>0
+        \setcounter{homeworkProblemCounter}{#1}
+    \fi
+    \section{Problem \arabic{homeworkProblemCounter}}
+    \setcounter{partCounter}{1}
+}{
+}
+
+\renewcommand{\part}[1]{\textbf{\large Part \Alph{partCounter}}\stepcounter{partCounter}\\}
+
+%
+% Various Helper Commands
+%
+
+% Useful for algorithms
+\newcommand{\alg}[1]{\textsc{\bfseries \footnotesize #1}}
+
+% For derivatives
+\newcommand{\deriv}[1]{\frac{\mathrm{d}}{\mathrm{d}x} (#1)}
+
+% For partial derivatives
+\newcommand{\pderiv}[2]{\frac{\partial}{\partial #1} (#2)}
+
+% Integral dx
+\newcommand{\dx}{\mathrm{d}x}
+
+% Alias for the Solution section header
+\newcommand{\solution}{\textbf{\large Solution}}
+
+% Probability commands: Expectation, Variance, Covariance, Bias
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Bias}{\mathrm{Bias}}
+
+% Number classes
+\newcommand{\R}{\mathrm{R}}
+\newcommand{\Q}{\mathrm{Q}}
+\newcommand{\Z}{\mathrm{Z}}
+\newcommand{\N}{\mathrm{N}}
+
+% Modulus
+\newcommand{\Mod}[1]{\ (\text{mod}\ #1)}
+
+\begin{document}
+
+\section{Port Scanner}
+
+\end{document}
