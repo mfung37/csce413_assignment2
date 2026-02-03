@@ -39,8 +39,11 @@ def scan_port(target, port, timeout=1.0):
         # TODO: Try to connect to target:port
         # TODO: Close the socket
         # TODO: Return True if connection successful
-
-        pass  # Remove this and implement
+        socket.setdefaulttimeout(timeout)
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((target, port))
+        client.close()
+        return True
 
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
@@ -93,7 +96,7 @@ def main():
 
     target = sys.argv[1]
     start_port = 1
-    end_port = 1024  # Scan first 1024 ports by default
+    end_port = 10000
 
     print(f"[*] Starting port scan on {target}")
 

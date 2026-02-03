@@ -34,8 +34,7 @@
 \usepackage{algpseudocode}
 \usepackage[svgnames]{xcolor}
 \usepackage{listings}
-\usepackage[backend=biber,style=authoryear]{biblatex}
-\addbibresource{refs.bib}
+\usepackage{graphicx}
 \lstset{
     basicstyle=\ttfamily,
     keywordstyle=\color{blue},
@@ -137,6 +136,20 @@
 
 \begin{document}
 
-\section{Port Scanner}
+\section{Executive Summary}
+\section{Part 1: Reconnaissance}
+Using the initial starter code to verify socket and docker networking working properly, I was able to discover port 5000 on \verb+172.20.0.10+ was open.
+\begin{figure}[h]
+\centering
+\includegraphics[width=.5\textwidth]{images/initial_scanner_test.png}
+\caption{Basic socket test to find port 5000}
+\end{figure}
+
+\section{Part 2: MITM Attack}
+\section{Part 3: Security Fixes}
+\subsection{Port Knocking}
+\subsection{Honeypot}
+\section{Remediation Recommendations}
+\section{Conclusion}
 
 \end{document}
