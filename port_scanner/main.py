@@ -24,82 +24,74 @@ import ipaddress
 import concurrent.futures
 
 def scan_port(target, port, timeout=1.0):
-    """
-    Scan a single port on the target host
+  """
+  Scan a single port on the target host
 
-    Args:
-        target (str): IP address or hostname to scan
-        port (int): Port number to scan
-        timeout (float): Connection timeout in seconds
+  Args:
+    target (str): IP address or hostname to scan
+    port (int): Port number to scan
+    timeout (float): Connection timeout in seconds
 
-    Returns:
-        bool: True if port is open, False otherwise
-    """
-    try:
-        # TODO: Create a socket
-        # TODO: Set timeout
-        # TODO: Try to connect to target:port
-        # TODO: Close the socket
-        # TODO: Return True if connection successful
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.settimeout(timeout) 
-        client.connect((target, port))
-        client.close()
-        return True
+  Returns:
+    bool: True if port is open, False otherwise
+  """
+  try:
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.settimeout(timeout) 
+    client.connect((target, port))
+    client.close()
+    return True
 
-    except (socket.timeout, ConnectionRefusedError, OSError):
-        return False
+  except (socket.timeout, ConnectionRefusedError, OSError):
+    return False
 
 
 def scan_range(target, start_port, end_port, threads: int):
-    """
-    Scan a range of ports on the target host
+  """
+  Scan a range of ports on the target host
 
-    Args:
-        target (str): IP address or hostname to scan
-        start_port (int): Starting port number
-        end_port (int): Ending port number
+  Args:
+    target (str): IP address or hostname to scan
+    start_port (int): Starting port number
+    end_port (int): Ending port number
+    threads (int): Number of threads to scan the port range
 
-    Returns:
-        list: List of open ports
-    """
-    open_ports = []
+  Returns:
+    list: List of open ports
+  """
+  open_ports = []
 
-    print(f"[*] Scanning {target} from port {start_port} to {end_port}")
+  print(f"[*] Scanning {target} from port {start_port} to {end_port}")
 
-    # TODO: Implement the scanning logic
-    # Hint: Loop through port range and call scan_port()
-    # Hint: Consider using threading for better performance
+  with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+    # run the threads
+    future_to_port = {
+      executor.submit(scan_port, target, port): port 
+      for port in range(start_port, end_port + 1)
+    }
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-        # run the threads
-        future_to_port = {
-            executor.submit(scan_port, target, port): port 
-            for port in range(start_port, end_port + 1)
-        }
-        for future in concurrent.futures.as_completed(future_to_port):
-            port = future_to_port[future]
-            try:
-                is_open = future.result()
-                if is_open:
-                    print(f" [!] Found open port: {port}")
-                    open_ports.append(port)
-            except Exception as e:
-                print(f" [!] Error scanning port {port}: {e}")
+    # go through the results and add these ports
+    for future in concurrent.futures.as_completed(future_to_port):
+      port = future_to_port[future]
+      try:
+        if future.result():
+          open_ports.append(port)
+      except Exception as e:
+        print(f" [!] Error scanning port {port} on target {target}: {e}")
 
-    return sorted(open_ports)
+  return sorted(open_ports)
 
 def handle_parsing_cmdline():
   # Basic parsing of command-line arguments
   parser = argparse.ArgumentParser(description="Basic port scanner")
 
   parser.add_argument('--target', type=str, required=True,
-                      help='Target IP address, optionally with CIDR')
+            help='Target IP address, optionally with CIDR')
   parser.add_argument('--ports', type=str, required=True,
-                      help='Port range ex: 1-65535')
+            help='Port range ex: 1-65535')
   parser.add_argument('--threads', type=int, default=1,
-                      help='Number of threads')
-                      
+            help='Number of threads')
+            
   args = parser.parse_args()
 
   return args
@@ -144,7 +136,7 @@ def main():
   for target, ports in target_open_ports.items():
     print(f"Target {target}")
     for port in ports:
-      print(f"    Port {port}: open")
+      print(f"  Port {port}: open")
 
 if __name__ == "__main__":
   main()
