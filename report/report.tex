@@ -145,6 +145,14 @@ Using the initial starter code to verify socket and docker networking working pr
 \caption{Basic socket test to find port 5000}
 \end{figure}
 
+After implementing some input handling with \verb+argparse+, CIDR handling with \verb+ipaddress+, and threading,
+I ran \verb+python main.py --target 172.10.0.0/24 --ports 1-10000 --threads 10000+ and got the results below.
+\begin{figure}[h]
+\centering
+\includegraphics[width=.5\textwidth]{images/all_open_ports.png}
+\caption{Open ports on the \texttt{172.10.0.0/24}}
+\end{figure}
+
 \section{Part 2: MITM Attack}
 \section{Part 3: Security Fixes}
 \subsection{Port Knocking}

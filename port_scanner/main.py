@@ -134,9 +134,10 @@ def main():
   print(f"\n[+] Scan complete!")
   print(f"[+] Found {sum(map(len, target_open_ports.values()))} open ports:")
   for target, ports in target_open_ports.items():
-    print(f"Target {target}")
-    for port in ports:
-      print(f"  Port {port}: open")
+    if len(ports) > 0:
+      print(f"Target {target}")
+      for port in ports:
+        print(f"  Port {port}: open")
 
 if __name__ == "__main__":
   main()
