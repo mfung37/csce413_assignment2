@@ -18,8 +18,10 @@ TODO for students:
 """
 
 import socket
-import sys
-
+import argparse
+import re
+import ipaddress
+import concurrent.futures
 
 def scan_port(target, port, timeout=1.0):
     """
@@ -39,8 +41,8 @@ def scan_port(target, port, timeout=1.0):
         # TODO: Try to connect to target:port
         # TODO: Close the socket
         # TODO: Return True if connection successful
-        socket.setdefaulttimeout(timeout)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.settimeout(timeout) 
         client.connect((target, port))
         client.close()
         return True
@@ -49,7 +51,7 @@ def scan_port(target, port, timeout=1.0):
         return False
 
 
-def scan_range(target, start_port, end_port):
+def scan_range(target, start_port, end_port, threads: int):
     """
     Scan a range of ports on the target host
 
@@ -64,49 +66,85 @@ def scan_range(target, start_port, end_port):
     open_ports = []
 
     print(f"[*] Scanning {target} from port {start_port} to {end_port}")
-    print(f"[*] This may take a while...")
 
     # TODO: Implement the scanning logic
     # Hint: Loop through port range and call scan_port()
     # Hint: Consider using threading for better performance
 
-    for port in range(start_port, end_port + 1):
-        # TODO: Scan this port
-        # TODO: If open, add to open_ports list
-        # TODO: Print progress (optional)
-        if scan_port(target, port):
-          open_ports.append(port)
-        pass  # Remove this and implement
+    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+        # run the threads
+        future_to_port = {
+            executor.submit(scan_port, target, port): port 
+            for port in range(start_port, end_port + 1)
+        }
+        for future in concurrent.futures.as_completed(future_to_port):
+            port = future_to_port[future]
+            try:
+                is_open = future.result()
+                if is_open:
+                    print(f" [!] Found open port: {port}")
+                    open_ports.append(port)
+            except Exception as e:
+                print(f" [!] Error scanning port {port}: {e}")
 
-    return open_ports
+    return sorted(open_ports)
 
+def handle_parsing_cmdline():
+  # Basic parsing of command-line arguments
+  parser = argparse.ArgumentParser(description="Basic port scanner")
+
+  parser.add_argument('--target', type=str, required=True,
+                      help='Target IP address, optionally with CIDR')
+  parser.add_argument('--ports', type=str, required=True,
+                      help='Port range ex: 1-65535')
+  parser.add_argument('--threads', type=int, default=1,
+                      help='Number of threads')
+                      
+  args = parser.parse_args()
+
+  return args
+
+def input_validation(args):
+  # valid target
+  valid_ip = lambda x: map(lambda y: 0 <= int(y) <= 255, x.split('.'))
+  if re.match(r'^(\d{,3}\.){3}\d{,3}$', args.target) and valid_ip(args.target):
+    targets = [args.target]
+  elif re.match(r'^(\d{,3}\.){3}\d{,3}/\d{,2}$', args.target):
+    try:
+      targets = ipaddress.IPv4Network(args.target)
+    except:
+      print('main.py: error: --target incorrect cidr format')
+      exit(-1)
+  else:
+    exit(-1)
+
+  # valid port range
+  if not re.match(r'^\d+-\d+$', args.ports):
+    print('main.py: error: --ports incorrect format')
+    exit(-1)
+
+  start_port, end_port = list(map(int, args.ports.split('-')))
+
+  return targets, start_port, end_port
 
 def main():
-    """Main function"""
-    # TODO: Parse command-line arguments
-    # TODO: Validate inputs
-    # TODO: Call scan_range()
-    # TODO: Display results
+  """Main function"""
 
-    # Example usage (you should improve this):
-    if len(sys.argv) < 2:
-        print("Usage: python3 port_scanner_template.py <target>")
-        print("Example: python3 port_scanner_template.py 172.20.0.10")
-        sys.exit(1)
+  args = handle_parsing_cmdline()
+  targets, start_port, end_port = input_validation(args)
+  print(f"[*] Starting port scan on {args.target}")
+  print(f"[*] This may take a while...")
+  
+  target_open_ports = {}
+  for target in targets:
+    target_open_ports[target] = scan_range(str(target), start_port, end_port, args.threads)
 
-    target = sys.argv[1]
-    start_port = 1
-    end_port = 10000
-
-    print(f"[*] Starting port scan on {target}")
-
-    open_ports = scan_range(target, start_port, end_port)
-
-    print(f"\n[+] Scan complete!")
-    print(f"[+] Found {len(open_ports)} open ports:")
-    for port in open_ports:
-        print(f"    Port {port}: open")
-
+  print(f"\n[+] Scan complete!")
+  print(f"[+] Found {sum(map(len, target_open_ports.values()))} open ports:")
+  for target, ports in target_open_ports.items():
+    print(f"Target {target}")
+    for port in ports:
+      print(f"    Port {port}: open")
 
 if __name__ == "__main__":
-    main()
+  main()
