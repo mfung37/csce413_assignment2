@@ -36,9 +36,12 @@ def scan_port(target, port, timeout=1.0):
     bool: True if port is open, False otherwise
   """
   try:
+    addr_info = socket.getaddrinfo(target, port, family=socket.AF_INET)[0]
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.settimeout(timeout) 
-    client.connect((target, port))
+    client.connect(addr_info[-1])
+
+    # banner grabbing
     client.close()
     return True
 
@@ -62,6 +65,13 @@ def scan_range(target, start_port, end_port, threads: int):
   open_ports = []
 
   print(f"[*] Scanning {target} from port {start_port} to {end_port}")
+
+  try:
+    socket.getaddrinfo(target, 5000, family=socket.AF_INET)[0]
+  except Exception as e:
+    print(f'Domain name {target} unable to be resolved:', e)
+    exit(-1)
+    
 
   with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
     # run the threads
@@ -108,7 +118,8 @@ def input_validation(args):
       print('main.py: error: --target incorrect cidr format')
       exit(-1)
   else:
-    exit(-1)
+    # assume it's a host name
+    targets = [args.target]
 
   # valid port range
   if not re.match(r'^\d+-\d+$', args.ports):
@@ -141,3 +152,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+
