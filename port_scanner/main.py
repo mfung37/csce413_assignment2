@@ -23,9 +23,9 @@ import re
 import ipaddress
 import concurrent.futures
 
-def scan_port(target, port, timeout=1.0):
+def scan_port(target, port, timeout=1.0) -> str:
   """
-  Scan a single port on the target host
+  Scan a single port on the target host. If open tries to grab banner
 
   Args:
     target (str): IP address or hostname to scan
@@ -33,21 +33,36 @@ def scan_port(target, port, timeout=1.0):
     timeout (float): Connection timeout in seconds
 
   Returns:
-    bool: True if port is open, False otherwise
+    bool: Banner if found banner, "no banner" if open but not banner, empty if not open
   """
-  try:
-    addr_info = socket.getaddrinfo(target, port, family=socket.AF_INET)[0]
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.settimeout(timeout) 
-    client.connect(addr_info[-1])
 
-    # banner grabbing
-    client.close()
-    return True
+  reqs = [b"", b"\r\n", b"GET / HTTP/1.0\r\n\r\n"]
 
-  except (socket.timeout, ConnectionRefusedError, OSError):
-    return False
+  for req in reqs:
 
+    try:
+      addr_info = socket.getaddrinfo(target, port, family=socket.AF_INET)[0]
+      client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      client.settimeout(timeout) 
+      client.connect(addr_info[-1])
+
+      banner = b""
+      if req != b"":
+        client.send(req)
+
+      try:
+        banner = client.recv(128)
+      except socket.timeout:
+        pass
+
+      client.close()
+
+      if banner:
+        return banner.decode(errors="ignore").strip()
+    except (ConnectionRefusedError, OSError):
+      return ""
+
+  return "no banner"
 
 def scan_range(target, start_port, end_port, threads: int):
   """
@@ -62,7 +77,7 @@ def scan_range(target, start_port, end_port, threads: int):
   Returns:
     list: List of open ports
   """
-  open_ports = []
+  open_ports = {}
 
   print(f"[*] Scanning {target} from port {start_port} to {end_port}")
 
@@ -84,12 +99,13 @@ def scan_range(target, start_port, end_port, threads: int):
     for future in concurrent.futures.as_completed(future_to_port):
       port = future_to_port[future]
       try:
-        if future.result():
-          open_ports.append(port)
+        data = future.result()
+        if data != "":
+          open_ports[port] = data
       except Exception as e:
         print(f" [!] Error scanning port {port} on target {target}: {e}")
 
-  return sorted(open_ports)
+  return open_ports
 
 def handle_parsing_cmdline():
   # Basic parsing of command-line arguments
@@ -147,8 +163,10 @@ def main():
   for target, ports in target_open_ports.items():
     if len(ports) > 0:
       print(f"Target {target}")
-      for port in ports:
+      for port, banner in ports.items():
         print(f"  Port {port}: open")
+        if banner != "no banner":
+          print(f"    Banner: {banner}")
 
 if __name__ == "__main__":
   main()
