@@ -249,12 +249,36 @@ To summarize,
   \item \verb+172.20.0.10:5000+ - \verb+http+ using Werkzeug/3.1.5 with Python 3.11.14 (Flask server). Has corresponding flag \verb+FLAG{n3tw0rk_tr4ff1c_1s_n0t_s3cur3}+
   \item \verb+172.20.0.11:3306+ - \verb+mysql+
   \item \verb+172.20.0.11:33060+ - Unknown
-  \item \verb+172.20.0.20:2222+ - \verb+ssh+ with OpenSSH 8.9 on Ubuntu
+  \item \verb+172.20.0.20:2222+ - \verb+ssh+ with OpenSSH 8.9 on Ubuntu. Has corresponding flag \verb+FLAG{h1dd3n_s3rv1c3s_n33d_pr0t3ct10n}+
   \item \verb+172.20.0.21:8888+ - \verb+http+ using Werkzeug/3.1.5 with Python 3.11.14 (Flask server)
   \item \verb+172.20.0.22:6379+ - \verb+telnet+
 \end{itemize}
 
 \section{Part 2: MITM Attack}
+As suggested by the instructions, I determine the network id of my docker network to be \verb+286b60758bd5+ and thus ran the command
+\verb+sudo tcpdump -i br-286b60758bd5 -A -s 0 'port 3306'+.
+This command listens to this bridge and looks for packets with information about \verb+port 3306+, which from recon only the mysql server has open.
+Running this and looking at the website on \verb+localhost:5001+, I went to the api routes \verb+/api/users+ and \verb+/api/secrets+ and can see that these packets are being sent in plaintext, as seen in Figure \ref{fig:tcpdump_mysql}.
+Log can be seen in \verb+mitm/tcpdump_mysql.txt+.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=\textwidth]{images/tcpdump_mysql.png}
+    \caption{Some of the tcpdump packets caught}
+    \label{fig:tcpdump_mysql}
+\end{figure}
+As intended in this assignment, the flags are consider sensitive and thus can obtain sensitive data through packet sniffing.
+
+To use this in conjugation with the info obtained in recon to get the third flag, I constructed a curl command with credentials to query for the flag.
+\begin{lstlisting}
+curl 172.20.0.21:8888/flag \
+  -H "Authorization: Bearer FLAG{n3tw0rk_tr4ff1c_1s_n0t_s3cur3}"
+\end{lstlisting}
+Obtaining the flag, \verb+FLAG{p0rt_kn0ck1ng_4nd_h0n3yp0ts_s4v3_th3_d4y}+.
+
+\subsection{Discussion on Real World Impacts}
+Plaintext traffic is generally considered not secure and same here with MySQL traffic being plaintext.
+This can allow people to do this packet sniffing/MITM attack to obtain information about the database through the queries such as table/column names.
+Similarly, the results of the query can be sensitive such as social security numbers (possibly only masked), hashed passwords, FERPA data like grades, HIPPA like medical data, etc.
 \section{Part 3: Security Fixes}
 \subsection{Port Knocking}
 \subsection{Honeypot}
