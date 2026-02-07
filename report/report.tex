@@ -150,13 +150,12 @@ I ran \verb+python main.py --target 172.10.0.0/24 --ports 1-10000 --threads 1000
 \begin{figure}[h]
 \centering
 \includegraphics[width=.5\textwidth]{images/all_open_ports.png}
-\caption{Open ports on the \texttt{172.10.0.0/24}}
+\caption{Some open ports on the \texttt{172.10.0.0/24}}
 \label{cidr_notation}
 \end{figure}
 
-
-
 Implementing some level of banner grabbing by going through some common probing techinques onto the same subnet and ports on Figure \ref{banner_grabbing}.
+This is ran wit all ports \verb+1-65535+ to get all ports
 \begin{figure}[h]
 \centering
 \includegraphics[width=.5\textwidth]{images/banner_grabbing.png}
@@ -170,6 +169,7 @@ Regardless, based on these banners, the services for these ports are
   \item \verb+172.20.0.1:5001+ - \verb+http+
   \item \verb+172.20.0.10:5000+ - \verb+http+
   \item \verb+172.20.0.11:3306+ - \verb+mysql+
+  \item \verb+172.20.0.11:33060+ - Unknown
   \item \verb+172.20.0.20:2222+ - \verb+ssh+
   \item \verb+172.20.0.21:8888+ - \verb+http+
   \item \verb+172.20.0.22:6379+ - \verb+telnet+
@@ -182,6 +182,9 @@ where the last one knowledge that in \verb+telnet+, \verb+get+ is a command and 
 \caption{Telnet connection on \texttt{172.10.0.22:6379}}
 \label{telnet_connection}
 \end{figure}
+
+Connecting to \verb+172.20.0.11:33060+ with \verb+nc+, all I get is the \verb+?+ as seen in the banner and no other information.
+I was not able to determine what this service could possibly be.
 
 Accessing the SSH server, credentials are shown when connecting with \verb+ssh+, I was able to read out the flag \verb+FLAG{h1dd3n_s3rv1c3s_n33d_pr0t3ct10n}+.
 
@@ -233,12 +236,23 @@ Based on this description, it likely for part 2 regarding analyzing network traf
 To show that domain names work, I set up running the python script within a docker container so it can resolve the domain names, which are the container names in the network. 
 This can be seen in Figure \ref{fig:domain_resolution}.
 
-\begin{figure}[htpb]
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.8\textwidth]{images/domain_resolution.png}
-  \caption{Domain name resolution of \verb+webapp+}
+  \caption{Domain name resolution of \texttt{webapp}}
   \label{fig:domain_resolution}
 \end{figure}
+
+To summarize,
+\begin{itemize}
+  \item \verb+172.20.0.1:5001+ - \verb+http+ using Werkzeug/3.1.5 with Python 3.11.14 (Flask server)
+  \item \verb+172.20.0.10:5000+ - \verb+http+ using Werkzeug/3.1.5 with Python 3.11.14 (Flask server). Has corresponding flag \verb+FLAG{n3tw0rk_tr4ff1c_1s_n0t_s3cur3}+
+  \item \verb+172.20.0.11:3306+ - \verb+mysql+
+  \item \verb+172.20.0.11:33060+ - Unknown
+  \item \verb+172.20.0.20:2222+ - \verb+ssh+ with OpenSSH 8.9 on Ubuntu
+  \item \verb+172.20.0.21:8888+ - \verb+http+ using Werkzeug/3.1.5 with Python 3.11.14 (Flask server)
+  \item \verb+172.20.0.22:6379+ - \verb+telnet+
+\end{itemize}
 
 \section{Part 2: MITM Attack}
 \section{Part 3: Security Fixes}
