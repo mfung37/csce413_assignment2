@@ -151,7 +151,10 @@ I ran \verb+python main.py --target 172.10.0.0/24 --ports 1-10000 --threads 1000
 \centering
 \includegraphics[width=.5\textwidth]{images/all_open_ports.png}
 \caption{Open ports on the \texttt{172.10.0.0/24}}
+\label{cidr_notation}
 \end{figure}
+
+
 
 Implementing some level of banner grabbing by going through some common probing techinques onto the same subnet and ports on Figure \ref{banner_grabbing}.
 \begin{figure}[h]
@@ -160,8 +163,82 @@ Implementing some level of banner grabbing by going through some common probing 
 \caption{Banner grabbing on \texttt{172.10.0.0/24}}
 \label{banner_grabbing}
 \end{figure}
+I'm not certain why \verb+172.20.0.1:2222+ appears to allow a socket connection now when Figure \ref{cidr_notation} doesn't have it open.
 
+Regardless, based on these banners, the services for these ports are
+\begin{itemize}
+  \item \verb+172.20.0.1:5001+ - \verb+http+
+  \item \verb+172.20.0.10:5000+ - \verb+http+
+  \item \verb+172.20.0.11:3306+ - \verb+mysql+
+  \item \verb+172.20.0.20:2222+ - \verb+ssh+
+  \item \verb+172.20.0.21:8888+ - \verb+http+
+  \item \verb+172.20.0.22:6379+ - \verb+telnet+
+\end{itemize}
+where the last one knowledge that in \verb+telnet+, \verb+get+ is a command and can verify by trying to connect via \verb+telnet+, seen in Figure \ref{telnet_connection}.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=.5\textwidth]{images/telnet_connection.png}
+\caption{Telnet connection on \texttt{172.10.0.22:6379}}
+\label{telnet_connection}
+\end{figure}
+
+Accessing the SSH server, credentials are shown when connecting with \verb+ssh+, I was able to read out the flag \verb+FLAG{h1dd3n_s3rv1c3s_n33d_pr0t3ct10n}+.
+
+Viewing the website at \verb+172.20.0.10:5000+, it suggests going to the route \verb+/api/secrets+, which returns the flag \verb+FLAG{n3tw0rk_tr4ff1c_1s_n0t_s3cur3}+.
+It notes this is the api token.
+
+Curling these http services, at \verb+172.20.0.21:8888+, it appears to be some sort of api route.
+Here it says that there's a flag route that also needs a token with hint to intercept network traffic, which is likely refering the the flag I got noted to be api token.
+Based on this description, it likely for part 2 regarding analyzing network traffic.
+
+\begin{lstlisting}
+{
+  "authentication": {
+    "alternative": "?token=<token> query parameter",
+    "header": "Authorization: Bearer <token>",
+    "hint": "The token can be found by intercepting network traffic...",
+    "type": "Bearer token"
+  },
+  "endpoints": [
+    {
+      "description": "API information",
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "description": "Health check",
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "description": "Get flag (requires authentication)",
+      "method": "GET",
+      "path": "/flag"
+    },
+    {
+      "description": "Get secret data (requires authentication)",
+      "method": "GET",
+      "path": "/data"
+    }
+  ],
+  "message": "This is a hidden API service. Authentication required.",
+  "port": 8888,
+  "service": "Secret API Server",
+  "status": "running",
+  "version": "1.0"
+}
+\end{lstlisting}
+
+To show that domain names work, I set up running the python script within a docker container so it can resolve the domain names, which are the container names in the network. 
+This can be seen in Figure \ref{fig:domain_resolution}.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/domain_resolution.png}
+  \caption{Domain name resolution of \verb+webapp+}
+  \label{fig:domain_resolution}
+\end{figure}
 
 \section{Part 2: MITM Attack}
 \section{Part 3: Security Fixes}

@@ -39,7 +39,6 @@ def scan_port(target, port, timeout=1.0) -> str:
   reqs = [b"", b"\r\n", b"GET / HTTP/1.0\r\n\r\n"]
 
   for req in reqs:
-
     try:
       addr_info = socket.getaddrinfo(target, port, family=socket.AF_INET)[0]
       client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
