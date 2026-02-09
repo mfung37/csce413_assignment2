@@ -6,6 +6,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends iptables iproute2 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY knock_server.py knock_client.py ./
+COPY knock_server.py ./
 
 CMD ["python3", "knock_server.py"]
