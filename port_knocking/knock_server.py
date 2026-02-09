@@ -6,6 +6,7 @@ import logging
 import socket
 import time
 import threading
+import subprocess
 
 DEFAULT_KNOCK_SEQUENCE = [1234, 5678, 9012]
 DEFAULT_PROTECTED_PORT = 2222
@@ -19,17 +20,52 @@ def setup_logging():
     handlers=[logging.StreamHandler()],
   )
 
+def drop_all_protected_port(protected_port):
+  """Drop all to protected port by default"""
+  logging.info("Dropping on firewall on port %s", protected_port)
 
-def open_protected_port(protected_port):
+  try:
+    cmd = [
+      "iptables", "-I", "INPUT", "1",
+      "-p", "tcp",
+      "--dport", str(protected_port),
+      "-j", "DROP",
+    ]
+    subprocess.run(cmd, check=True)
+  except subprocess.CalledProcessError as e:
+    logging.error(f"Failed to drop port: {e}")
+
+def open_protected_port(ip, protected_port):
   """Open the protected port using firewall rules."""
-  # TODO: Use iptables/nftables to allow access to protected_port.
-  logging.info("TODO: Open firewall for port %s", protected_port)
+  logging.info("Opening firewall for source ip %s on port %s", ip, protected_port)
 
+  try:
+    cmd = [
+      "iptables", "-I", "INPUT", "1",
+      "-s", ip,
+      "-p", "tcp",
+      "--dport", str(protected_port),
+      "-j", "ACCEPT",
+    ]
+    subprocess.run(cmd, check=True)
+  except subprocess.CalledProcessError as e:
+    logging.error(f"Failed to open port: {e}")
 
-def close_protected_port(protected_port):
+def close_protected_port(ip, protected_port):
   """Close the protected port using firewall rules."""
-  # TODO: Remove firewall rules for protected_port.
-  logging.info("TODO: Close firewall for port %s", protected_port)
+  logging.info("Close firewall for source ip %s on port %s", ip, protected_port)
+
+  try:
+    cmd = [
+      "iptables", "-D", "INPUT",
+      "-s", ip,
+      "-p", "tcp",
+      "--dport", str(protected_port),
+      "-j", "ACCEPT",
+    ]
+    subprocess.run(cmd, check=True)
+  except subprocess.CalledProcessError as e:
+    logging.error(f"Failed to close port: {e}")
 
 def listen_for_knocks(sequence, window_seconds, protected_port):
   """Listen for knock sequence and open the protected port."""
@@ -99,6 +135,9 @@ def main():
   # starts service on separate thread
   t = threading.Thread(target=start_service, args=(args.protected_port,), daemon=True)
   t.start()
+
+  # close port to all users
+  drop_all_protected_port(args.protected_port)
 
   listen_for_knocks(sequence, args.window, args.protected_port)
 
