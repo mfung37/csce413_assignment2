@@ -6,16 +6,18 @@ import os
 import time
 import paramiko
 import socket
-import threading
+import random
 
 LOG_PATH = "/app/logs/honeypot.log"
 KEY_FILE = "/app/logs/host.key" # persistant as host shares the logs volume
 HONEYPOT_PORT = 22
 
-# A dummy interface to handle authentication logic
+# server code
 class HoneypotServer(paramiko.ServerInterface):
   def check_auth_password(self, username, password):
-    print(f"Login attempt: {username} / {password}")
+    logger = logging.getLogger("Honeypot")
+    logger.info(f"Login attempt: {username} / {password}")
+    time.sleep(random.random() + 2) # slow user down
     return paramiko.AUTH_FAILED
 
 def setup_logging():
@@ -28,10 +30,10 @@ def setup_logging():
 
 def get_host_key():
   if os.path.exists(KEY_FILE):
-    # Load the existing key
+    # load the key
     return paramiko.RSAKey.from_private_key_file(KEY_FILE)
   else:
-    # Generate and save a new key once
+    # generate/save key
     key = paramiko.RSAKey.generate(2048)
     key.write_private_key_file(KEY_FILE)
     return key
@@ -53,10 +55,11 @@ def run_honeypot():
   while True:
     conn, addr = server_socket.accept()
 
-    logger.info(f"Connection from {addr}")
-
     transport = paramiko.Transport(conn)
     transport.add_server_key(host_key)
+
+    client_version = transport.remote_version
+    logger.info(f"Client IP: {addr[0]} | Source Port: {addr[1]} | Version: {client_version}")
     
     server = HoneypotServer()
     transport.start_server(server=server)

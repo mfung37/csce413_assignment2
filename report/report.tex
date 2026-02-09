@@ -330,6 +330,9 @@ However, when I connected again, my host complained that the rsa key changed, wh
   \caption{Warning from ssh about changed rsa key}
   \label{fig:bad_rsa_key}
 \end{figure}
+I was able to fix this by creating a \verb+host.key+ file with the rsa key and reading it if it exist on startup.
+
+
 
 \section{Remediation Recommendations}
 \section{Conclusion}
