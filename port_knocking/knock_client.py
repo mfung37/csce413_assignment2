@@ -4,7 +4,6 @@
 import argparse
 import socket
 import time
-import subprocess
 
 DEFAULT_KNOCK_SEQUENCE = [1234, 5678, 9012]
 DEFAULT_PROTECTED_PORT = 2222

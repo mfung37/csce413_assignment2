@@ -38,7 +38,7 @@
 \lstset{
     basicstyle=\ttfamily,
     keywordstyle=\color{blue},
-    stringstyle=\color{green},
+    stringstyle=\color{olive},
     commentstyle=\color{CadetBlue},
     morecomment=[l]{\%}
 }
@@ -281,8 +281,47 @@ This can allow people to do this packet sniffing/MITM attack to obtain informati
 Similarly, the results of the query can be sensitive such as social security numbers (possibly only masked), hashed passwords, FERPA data like grades, HIPPA like medical data, etc.
 \section{Part 3: Security Fixes}
 \subsection{Port Knocking}
+To complete this task, I looked over the files to determine what needs to be done.
+It appear the \verb+knock_client.py+ appears more or less complete and the main focus is \verb+knock_server.py+.
+In particular, it appears I also need to start a service on the protected port.
+After messing around with several things, I decided that just a socket of my own creation would be the simpliest as the container is a python container and messing around with configs would be a pain.
 
+The following is a very simple TCP socket that sends Success upon connecting and then closes the connection.
+\begin{lstlisting}[language=Python]
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+  try:
+    server.bind(('0.0.0.0', protected_port))
+    server.listen(5)
+
+    while True:
+      conn, addr = server.accept()
+      with conn:
+        logger.info("Successful connection with %s", addr)
+        conn.send(b"Success")
+
+  except Exception as e:
+    logger.error("Failed to start service:", e)
+\end{lstlisting}
+Since this is blocking, I ran this within a separate thread 
+\begin{lstlisting}[language=Python]
+t = threading.Thread(target=start_service, args=(args.protected_port,), daemon=True)
+t.start()
+\end{lstlisting}
+I went to verify this connection works with \verb+nc+ and \verb+demo.sh+ showing connected.
+I wanted then to make sure I am blocking the port from being access normally.
+Looking into \verb+iptables+, I had all packets be \verb+DROP+ when trying to access the protected port and added it as a function to add to the \verb+iptables+.
+Again, verifying that I no longer can connect, I noticed it hangs with \verb+nc+ and \verb+demo.sh+.
+I decided to change the timeout to be 2 seconds for \verb+nc+ in the \verb+demo.sh+ file.
+
+For implementing the knocking, after looking into ways to implement a port knocking, I determine that using UDP would be simplier with \verb+select+ helping reduce load.
+I just verify this works with printing connections before continuing writing the implementing handling the sequence of knocks.
+
+Port knocking seems a bit esoteric way to secure a port, but certainly adds the security of ``need to know'' to be able to connect to a port as brute forcing for if a port is open becomes more difficult.
+However, in terms of computation, it now has a bunch of other ports open listening, which is a bit wasteful of resources.
+I'm pretty sure firewalls are usually the way to handle this properly by making sure only certain networks can access certain ports, which I think is probably good enough usually.
+Though, port knocking certainly adds more layers of protection, which is good for security.
 \subsection{Honeypot}
+
 \section{Remediation Recommendations}
 \section{Conclusion}
 

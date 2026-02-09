@@ -74,12 +74,6 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
   logger.info("Listening for knocks: %s", sequence)
   logger.info("Protected port: %s", protected_port)
 
-  # TODO: Create UDP or TCP listeners for each knock port.
-  # TODO: Track each source IP and its progress through the sequence.
-  # TODO: Enforce timing window per sequence.
-  # TODO: On correct sequence, call open_protected_port().
-  # TODO: On incorrect sequence, reset progress.
-
   # create a socket for each port of sequence to listen for the knocks
   knock_sockets = {}
   for port in sequence:
