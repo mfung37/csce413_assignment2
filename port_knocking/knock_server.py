@@ -7,6 +7,7 @@ import socket
 import time
 import threading
 import subprocess
+import select
 
 DEFAULT_KNOCK_SEQUENCE = [1234, 5678, 9012]
 DEFAULT_PROTECTED_PORT = 2222
@@ -79,8 +80,25 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
   # TODO: On correct sequence, call open_protected_port().
   # TODO: On incorrect sequence, reset progress.
 
+  # create a socket for each port of sequence to listen for the knocks
+  knock_sockets = {}
+  for port in sequence:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', port))
+    sock.setblocking(False)
+    knock_sockets[sock] = port
+
+  # main loop to listen for knocks
   while True:
-    time.sleep(1)
+    # uses select to get ports that have actually recieved something
+    readable, _, _ = select.select(knock_sockets.keys(), [], [], 1.0)
+
+    for sock in readable:
+      # recv but only keep where it came from
+      _, (ip, _) = sock.recvfrom(1024)
+      target_port = knock_sockets[sock]
+
+      logger.info("Knocked from ip %s on port %s", ip, target_port)
 
 def start_service(protected_port):
   """Runs python basic http.server for the port"""
