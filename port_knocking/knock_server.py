@@ -88,10 +88,15 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
     sock.setblocking(False)
     knock_sockets[sock] = port
 
+  # stores each client along with progression and start of sequence
+  client_states = {}
+
   # main loop to listen for knocks
   while True:
     # uses select to get ports that have actually recieved something
     readable, _, _ = select.select(knock_sockets.keys(), [], [], 1.0)
+
+    current_time = time.time()
 
     for sock in readable:
       # recv but only keep where it came from
@@ -99,6 +104,32 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
       target_port = knock_sockets[sock]
 
       logger.info("Knocked from ip %s on port %s", ip, target_port)
+
+      state = client_states.setdefault(ip, {'index': 0, 'start_time': current_time})
+
+      # took too long for the sequence
+      if state['start_time'] + window_seconds < current_time:
+        logger.warning("Sequence took too long to complete. Resetting...")
+        client_states.pop(ip)
+        continue
+
+      # correct knock
+      if target_port == sequence[state['index']]:
+        if state['index'] == 0:
+          state['start_time'] = current_time
+          
+        state['index'] += 1
+
+        # complete sequence
+        if state['index'] == len(sequence):
+          logger.info(f"Opening port {protected_port} for {ip}.")
+          open_protected_port(ip, protected_port)
+
+          # reset sequence if need to do it again
+          client_states.pop(ip)
+      else:
+        logger.warning(f"Incorrect sequence from {ip}. Resetting...")
+        client_states.pop(ip)
 
 def start_service(protected_port):
   """Runs python basic http.server for the port"""
