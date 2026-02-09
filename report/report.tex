@@ -321,6 +321,15 @@ However, in terms of computation, it now has a bunch of other ports open listeni
 I'm pretty sure firewalls are usually the way to handle this properly by making sure only certain networks can access certain ports, which I think is probably good enough usually.
 Though, port knocking certainly adds more layers of protection, which is good for security.
 \subsection{Honeypot}
+I decided to use an ssh honey since the suggested tools are for ssh.
+I used \verb+paramiko+ to implement a basic ssh server that always rejects login attempts, and verify that ssh does in fact connect and it looks like a normal ssh connection.
+However, when I connected again, my host complained that the rsa key changed, which is unusual.
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/bad_rsa_key.png}
+  \caption{Warning from ssh about changed rsa key}
+  \label{fig:bad_rsa_key}
+\end{figure}
 
 \section{Remediation Recommendations}
 \section{Conclusion}
