@@ -34,6 +34,7 @@
 \usepackage{algpseudocode}
 \usepackage[svgnames]{xcolor}
 \usepackage{listings}
+\usepackage{url}
 \usepackage{graphicx}
 \lstset{
     basicstyle=\ttfamily,
@@ -137,6 +138,24 @@
 \begin{document}
 
 \section{Executive Summary}
+For this assignment, I went through reconnaissance to discover machines with services using a self-created port scanner in Python.
+I was able to discover \verb+http+, \verb+sql+, \verb+ssh+, and \verb+telnet+ services based on their banners when connecting to these open ports that were discovered.
+Flags were hidden on these devices, at which I was able to obtain two of them by accessing an api route and the ssh device.
+Additionally, I found an api key, which was one of flags, also through a traffic sniffing using tcpdump.
+Since the traffic between the web server and SQL server was not encrypted, I was able to get this api key alongside with other sensitive information such as table information.
+Using this api key on the other web server, I was able to get the last flag using a basic \verb+curl+ command.
+
+The other main part of the assignment was implementation of protective measures: port knocking and honey pot.
+The port knocking was implemented to protect in a sandbox environment the port that required ``knocking'' on the sequence \verb+1234, 5678, 9012+ using UDP before able to connect to \verb+2222+ with TCP.
+For the honey pot, a fake \verb+ssh+ server was implemented using \verb+paramiko+ that logs the connections and credentials that were tried.
+Also, there is slowing down the actions of the user to make it more annoying to attack, though there isn't anything.
+
+Remediation for the attacks on the network are discussed. 
+For example, making the packet sniffing more difficult with encryption.
+Also, making port scanning more difficult is to drop packet instead of rejecting as it would make it seem the host doesn't even exist along with reduce number open ports by active scanning and closing unneeded ports.
+
+Repo: \url{https://github.com/mfung37/csce413_assignment2}
+
 \section{Part 1: Reconnaissance}
 Using the initial starter code to verify socket and docker networking working properly, I was able to discover port 5000 on \verb+172.20.0.10+ was open.
 \begin{figure}[h]
@@ -320,21 +339,35 @@ Port knocking seems a bit esoteric way to secure a port, but certainly adds the 
 However, in terms of computation, it now has a bunch of other ports open listening, which is a bit wasteful of resources.
 I'm pretty sure firewalls are usually the way to handle this properly by making sure only certain networks can access certain ports, which I think is probably good enough usually.
 Though, port knocking certainly adds more layers of protection, which is good for security.
+
+\newpage
 \subsection{Honeypot}
 I decided to use an ssh honey since the suggested tools are for ssh.
 I used \verb+paramiko+ to implement a basic ssh server that always rejects login attempts, and verify that ssh does in fact connect and it looks like a normal ssh connection.
 However, when I connected again, my host complained that the rsa key changed, which is unusual.
-\begin{figure}[htpb]
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.8\textwidth]{images/bad_rsa_key.png}
   \caption{Warning from ssh about changed rsa key}
   \label{fig:bad_rsa_key}
 \end{figure}
 I was able to fix this by creating a \verb+host.key+ file with the rsa key and reading it if it exist on startup.
-
-
-
+I also fixed some issue with logging and made logging in slower with sleeping between login attempts.
 \section{Remediation Recommendations}
+\subsection{MITM protection}
+In the attack, the traffic between the SQL server and the web server was not encrypted, leaking sensitive data like table names and flags.
+Thus, it should be encrypted with TLS/SSL as suggested by the assignment.
+
+\subsection{Service Discovery Protection}
+Packets should be dropped when getting packets to ports not open rather than rejecting connection, which can slow down scanning for ports as they need to wait the timeout.
+Minimize the number of ports open as unused service increases the attack surface unnecessarily.
+Active network scanning to discover these possibly unused services, which can be looked into and closed.
+Firewalls can protect number of machines that can be accessed along with additional network segmentation.
+
 \section{Conclusion}
+From this assignment, I learned about a new way of protecting ports: port knocking.
+Port knocking sounds a bit esoteric but certainly adds more security to prevent people without the ``know'' to access services.
+I learned more about python sockets, select, and paramiko for implementing port knocking and honeypots.
+This assignment was somewhat fun though a bit undirected.
 
 \end{document}
