@@ -123,7 +123,13 @@ def listen_for_knocks(sequence, window_seconds, protected_port):
         # complete sequence
         if state['index'] == len(sequence):
           logger.info(f"Opening port {protected_port} for {ip}.")
+
+          # open the port to the ip
           open_protected_port(ip, protected_port)
+
+          # start timer on separate thread to run close after a bit
+          t = threading.Timer(1.0, close_protected_port, args=[ip, protected_port])
+          t.start()
 
           # reset sequence if need to do it again
           client_states.pop(ip)
